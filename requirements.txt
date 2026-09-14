@@ -1,0 +1,21 @@
+# Runtime dependencies for the Hugging Face Space.
+#
+# This is the DASHBOARD-ONLY dependency set, not the repository's
+# requirements-base.lock.txt. The dashboard is a renderer: every number it shows
+# comes from `src.dashboard`, which is pure Python, and from a committed fixture
+# (`tests/fixtures/dashboard_known_examples.json`). It never trains, never loads
+# a transformer, and never touches torch.
+#
+# streamlit / pyyaml are imported directly by the dashboard.
+# numpy / pandas / scipy / scikit-learn arrive transitively through
+# `src.evaluation` and `src.models`, which `src.dashboard` imports for its
+# dataclasses. They are pinned rather than floored for the same reason the
+# repository's Dockerfile installs the lock and not the floors: a floor is not a
+# version, and a Space that resolves differently on every rebuild does not match
+# any auditable file.
+streamlit==1.63.0
+PyYAML==6.0.3
+numpy==2.4.4
+pandas==3.0.2
+scipy==1.17.1
+scikit-learn==1.8.0

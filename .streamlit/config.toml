@@ -1,0 +1,16 @@
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Show errors in the page rather than a blank screen. This app's guards raise on
+# purpose -- an EthicsGateError or a missing provenance stamp must be visible,
+# not swallowed into a server log nobody reading the Space can see.
+showErrorDetails = true
+
+[theme]
+base = "light"
