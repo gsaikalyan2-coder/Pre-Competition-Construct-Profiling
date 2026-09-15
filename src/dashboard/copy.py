@@ -241,8 +241,7 @@ NON_DEFAULT_POLICY_EXPORT = (
 # ---------------------------------------------------------------------------
 
 ANNOUNCEMENT = (
-    "Synthetic text only. Not a clinical instrument, and no claim about any "
-    "identifiable person."
+    "Synthetic text only. Not a clinical instrument, and no claim about any identifiable person."
 )
 
 PAGE1_TITLE = "Ten signals, read from what an athlete wrote"
