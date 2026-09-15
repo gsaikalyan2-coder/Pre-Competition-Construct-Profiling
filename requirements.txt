@@ -1,4 +1,10 @@
-# Runtime dependencies for the Hugging Face Space.
+# Runtime dependencies for the Streamlit Community Cloud deployment.
+#
+# Python packages only. The APT packages this app needs -- the Tesseract OCR
+# engine and its English language data, for the Phase 27 photo path -- live in
+# packages.txt, which Streamlit Cloud installs BEFORE this file. Without that
+# file the app boots healthy and refuses every photo upload, which is correct
+# behaviour and indistinguishable from the feature being broken.
 #
 # This is the DASHBOARD-ONLY dependency set, not the repository's
 # requirements-base.lock.txt. The dashboard is a renderer: every number it shows
