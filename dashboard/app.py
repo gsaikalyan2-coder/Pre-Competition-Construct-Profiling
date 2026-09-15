@@ -42,6 +42,7 @@ import streamlit.components.v1 as components  # noqa: E402
 from src.dashboard import (  # noqa: E402
     DEFAULT_POLICY_LABEL,
     POLICY_LABELS,
+    POLICY_TILE_NOTE,
     build_view,
     known_examples,
     motion_panel,
@@ -87,10 +88,21 @@ st.markdown(theme.app_css(mode), unsafe_allow_html=True)
 # person who meets it. Costs one line of sidebar text and only in the off state.
 if not theme.cognitive_layer_enabled():
     st.sidebar.caption(
-        f"Cognitive layer off — set {theme.COGNITIVE_FLAG}=1 to show the brain atlas, "
+        f"Cognitive layer off: set {theme.COGNITIVE_FLAG}=1 to show the brain atlas, "
         "cognitive load and neurofeedback pages. Everything behind it runs on "
         "generated signals; nobody is recorded in either state."
     )
+
+# The policy the reader chose, held in a plain (non-widget) session key.
+#
+# Streamlit garbage-collects a widget's state when that widget is not rendered on
+# the current page, so a selectbox key alone does NOT survive navigation: the
+# reader set "Pessimistic" on the dashboard, opened Score my own text, and was
+# silently scored under the conservative default. That is the same defect the
+# light/dark control already had, and it is worse here, because the two pages
+# then disagreed about which assumption produced their numbers. Same fix: the
+# choice is copied into a plain key, and every page reads and writes that.
+POLICY_STATE_KEY = "policy_label_shared"
 
 DETAIL_PAGE = "pages/1_Signal_detail.py"
 
@@ -166,13 +178,17 @@ with controls_right:
     policy = st.selectbox(
         "How should the four two-sided signals be counted?",
         list(POLICY_LABELS),
-        index=list(POLICY_LABELS).index(DEFAULT_POLICY_LABEL),
+        index=list(POLICY_LABELS).index(
+            st.session_state.get(POLICY_STATE_KEY, DEFAULT_POLICY_LABEL)
+        ),
         key="policy_label",
         help=(
             "Four of the ten signals can be good news or bad news depending on which way "
             "they point. The default refuses to guess and counts them as zero."
         ),
     )
+
+st.session_state[POLICY_STATE_KEY] = policy
 
 view = build_view(example_id=choice, backend=replay, scorer=scorer_for(policy))
 st.markdown(f"> {replay.get(choice).text}")
@@ -221,6 +237,18 @@ with meter:
     components.html(motion_panel(view, mode=mode), height=panel_height(view), scrolling=False)
 
 st.markdown(f"## {plain.PAGE1_GRID_LABEL}")
+st.caption(
+    POLICY_TILE_NOTE[view.policy_key].capitalize()
+    + ". "
+    + (
+        f"This text triggered {view.two_sided_detected} of them, so the setting "
+        "changes those tiles and the index with them."
+        if view.two_sided_detected
+        else "This text triggered none of them, so the setting states a different "
+        "assumption and every number stays where it is."
+    )
+    + " The four two-sided tiles below are the ones it moves."
+)
 
 tiles = widgets_for(view)
 for row_start in range(0, len(tiles), 3):
@@ -247,7 +275,7 @@ for row_start in range(0, len(tiles), 3):
 if st.session_state.get("detail_construct"):
     st.switch_page(DETAIL_PAGE)
 
-with st.expander("Provenance and limitations — read before quoting any number"):
+with st.expander("Provenance and limitations: read before quoting any number"):
     st.markdown(f"- {plain.ANNOUNCEMENT}")
     st.markdown(f"- {view.policy_note}")
     for notice in view.notices:

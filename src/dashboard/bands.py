@@ -71,7 +71,7 @@ class Band:
 
     def describe(self) -> str:
         """The only form in which a band may be shown to a reader."""
-        return f"{self.label} ({self.lower}-{self.upper} on the scale) — {self.caveat}"
+        return f"{self.label} ({self.lower}-{self.upper} on the scale): {self.caveat}"
 
 
 #: Thirds. Named for where they sit on the scale, not for what they imply about

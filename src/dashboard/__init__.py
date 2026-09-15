@@ -56,11 +56,20 @@ from .charts import (
     risk_meter,
     risk_waterfall,
 )
+from .gibberish import TextAdmission, admit
+from .mediaio import (
+    NONVERBAL_STAMP,
+    MediaResult,
+    media_context_weights,
+    read_upload,
+)
 from .motion import evidence_height, motion_panel, panel_height, spans_panel
 from .view import (
     DEFAULT_POLICY_LABEL,
     FORBIDDEN_SUBSTRINGS,
     POLICY_LABELS,
+    POLICY_SHORT,
+    POLICY_TILE_NOTE,
     ConstructBar,
     DashboardView,
     ScoreSurface,
@@ -73,6 +82,12 @@ from .widgets import Widget, widget_for, widgets_for
 
 __all__ = [
     "widgets_for",
+    "admit",
+    "read_upload",
+    "MediaResult",
+    "media_context_weights",
+    "NONVERBAL_STAMP",
+    "TextAdmission",
     "widget_for",
     "theme",
     "score_from_view",
@@ -85,6 +100,8 @@ __all__ = [
     "per_construct_chart",
     "load_per_construct",
     "POLICY_LABELS",
+    "POLICY_SHORT",
+    "POLICY_TILE_NOTE",
     "PER_CONSTRUCT_CAPTION",
     "DEFAULT_POLICY_LABEL",
     "ConstructScore",

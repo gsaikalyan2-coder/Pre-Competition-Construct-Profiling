@@ -139,7 +139,7 @@ def construct_contribution_chart(bars: Sequence[ConstructBar], *, width: int = C
         f'<text x="8" y="18" {FONT} font-size="12" fill="{COLOUR_INK}" font-weight="600">'
         "Contribution to the risk index</text>",
         f'<text x="8" y="34" {FONT} font-size="10" fill="{COLOUR_MUTED}">'
-        "left of the rule lowers risk, right raises it — sign is position, not colour</text>",
+        "left of the rule lowers risk, right raises it; sign is position, not colour</text>",
     ]
 
     top = 46
@@ -162,7 +162,7 @@ def construct_contribution_chart(bars: Sequence[ConstructBar], *, width: int = C
             )
             out.append(
                 f'<text x="{centre + 16:.1f}" y="{mid + 4:.1f}" {FONT} font-size="10" '
-                f'fill="{COLOUR_MUTED}" font-style="italic">inert — no direction</text>'
+                f'fill="{COLOUR_MUTED}" font-style="italic">inert, no direction</text>'
             )
             continue
 
@@ -236,7 +236,7 @@ def construct_probability_chart(bars: Sequence[ConstructBar], *, width: int = CH
                 f'<rect x="{LABEL_WIDTH}" y="{y + 5:.1f}" width="{length:.1f}" height="14" '
                 f'fill="{fill}"{stroke} rx="3"/>'
             )
-        suffix = " — inert" if bar.inert else ""
+        suffix = ", inert" if bar.inert else ""
         out.append(
             f'<text x="{LABEL_WIDTH + length + 6:.1f}" y="{mid + 4:.1f}" {FONT} '
             f'font-size="10" fill="{COLOUR_INK}">{bar.probability:.2f}{suffix}</text>'
@@ -276,7 +276,7 @@ def risk_meter(surface: ScoreSurface, *, width: int = CHART_WIDTH) -> str:
             f'<text x="{track_x + track_w}" y="68" {FONT} font-size="10" '
             f'fill="{COLOUR_MUTED}" text-anchor="end">1</text>',
             f'<text x="16" y="86" {FONT} font-size="10" fill="{COLOUR_MUTED}">'
-            "ranking only — not calibrated; no observed outcome exists to calibrate "
+            "ranking only, not calibrated; no observed outcome exists to calibrate "
             "against</text>",
             "</svg>",
         ]
@@ -618,7 +618,7 @@ def per_construct_chart(rows: Sequence, *, caption: str = "", width: int = CHART
             f'<line x1="{floor_x:.1f}" y1="{y + 4:.1f}" x2="{floor_x:.1f}" '
             f'y2="{y + 20:.1f}" stroke="{COLOUR_INK}" stroke-width="1.5"/>'
         )
-        suffix = "" if row.beats_floor else " — no better than the floor"
+        suffix = "" if row.beats_floor else ", no better than the floor"
         out.append(
             f'<text x="{plot_x + plot_w + 6}" y="{mid + 4:.1f}" {FONT} font-size="10" '
             f'fill="{COLOUR_INK}">{row.f1:.2f}{suffix}</text>'

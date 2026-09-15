@@ -216,7 +216,7 @@ STAMP_CSS = (
 
 
 # ===========================================================================
-# V1 — the construct → brain network atlas
+# V1, the construct → brain network atlas
 # ===========================================================================
 
 #: Where each region sits, as a fraction of the figure box. Presentation, so it
@@ -503,7 +503,7 @@ def atlas_panel(view, *, mode: str = motion.DEFAULT_MODE, frames: Sequence = ())
     evidence_notes = "".join(f"<li>{escape(note)}</li>" for note in sorted(states.values()))
     unmapped = "".join(
         f"<li><b>{escape(plain.CONSTRUCTS.get(row.construct, (row.construct, '', ''))[0])}</b>"
-        f" — {escape(' '.join(row.rationale.split()))}</li>"
+        f", {escape(' '.join(row.rationale.split()))}</li>"
         for row in atlas.unmapped
     )
     # Deduplicated by record id, not by object identity. The page builds `view`
@@ -760,7 +760,7 @@ _SIMULATOR_SCRIPT = """
 
 
 # ===========================================================================
-# V3 — cognitive load
+# V3, cognitive load
 # ===========================================================================
 
 TRACE_W = 720
@@ -1016,7 +1016,7 @@ _LOAD_SCRIPT = """
 
 
 # ===========================================================================
-# V5 — closed-loop neurofeedback, demo mode
+# V5, closed-loop neurofeedback, demo mode
 # ===========================================================================
 
 RING_BOX = 320
@@ -1184,7 +1184,7 @@ _NF_SCRIPT = """
 
 
 # ===========================================================================
-# V3, narrated — a clip of speech with the simulated body following it
+# V3, narrated, a clip of speech with the simulated body following it
 # ===========================================================================
 
 NARRATED_TRACE_H = 110

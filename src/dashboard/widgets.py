@@ -31,7 +31,11 @@ from src.dashboard.copy import (
     NF_TILE_CAPTION,
     NF_TILE_LABEL,
 )
-from src.dashboard.view import ConstructBar, DashboardView
+from src.dashboard.view import (
+    POLICY_SHORT,
+    ConstructBar,
+    DashboardView,
+)
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,13 @@ class Widget:
     inert: bool
     detected: bool
     stamp: str
+    #: True for the four constructs whose direction the taxonomy leaves open.
+    #: Carried rather than re-derived from a name list, so a tile cannot claim
+    #: two-sidedness the arithmetic did not use -- the same rule
+    #: `view._bars_for` applies to `inert`.
+    two_sided: bool = False
+    #: The policy that produced `secondary`, as `PolarityPolicy.value`.
+    policy_key: str = "neutral"
 
     def __post_init__(self) -> None:
         if not self.stamp.strip():
@@ -57,20 +68,67 @@ class Widget:
             )
 
 
-def _widget(bar: ConstructBar, stamp: str) -> Widget:
+def _widget(bar: ConstructBar, stamp: str, policy_key: str) -> Widget:
+    """One tile, with the two-sided four reading off the policy in force.
+
+    The four constructs whose direction the taxonomy leaves open are the reason
+    the policy selector exists, and before this they were the only tiles on the
+    grid that looked identical whichever way it was set: `inert` flipped, so the
+    hatching went away, but the caption still said "shown, but counted as zero"
+    because it was keyed off the taxonomy's static `direction` field rather than
+    off the arithmetic. A tile that reports the wrong assumption is worse than a
+    tile that reports none, so the caption is now derived from `policy_key` --
+    the same value `fusion.score` used -- and the secondary value is the signed
+    push the policy actually produced.
+
+    Two-sidedness itself is still read off the live decomposition
+    (`ConstructBar.direction == "polar"`), never off a name list, for the reason
+    `view._bars_for` gives: a name list is correct until the first ablation.
+    """
     title, _, direction = CONSTRUCTS.get(
         bar.construct, (bar.construct.replace("_", " "), "", "inert" if bar.inert else "raises")
     )
+    two_sided = bar.direction == "polar"
+
+    if bar.inert:
+        # Conservative default: the construct was detected and then discarded.
+        secondary = "counted as zero"
+        secondary_caption = DIRECTION_PLAIN[direction]
+    elif two_sided and not bar.detected:
+        # The setting resolved this construct's direction, and the text did not
+        # trigger it, so the resolution has nothing to multiply. Said out loud,
+        # because the alternative is a reader moving the switch, watching four
+        # tiles read +0.000 either way, and concluding the switch is broken --
+        # which is how the first committed example actually behaves.
+        secondary = f"{bar.contribution:+.3f}"
+        secondary_caption = "not picked up in this text, so the setting cannot move it"
+    elif two_sided:
+        # The policy resolved it. Say which way, in the tile, next to the number
+        # that moved -- a reader screenshotting one tile carries the assumption.
+        #
+        # The side is read off the POLICY, not off the sign of the contribution.
+        # Taking it from the sign looks equivalent and is not: a contribution of
+        # exactly zero has no sign, and every undetected construct would then be
+        # labelled "good news" under both settings.
+        secondary = f"{bar.contribution:+.3f}"
+        side = "bad news" if policy_key == "pessimistic" else "good news"
+        secondary_caption = f"read as {side} ({POLICY_SHORT.get(policy_key, policy_key)} setting)"
+    else:
+        secondary = f"{bar.contribution:+.3f}"
+        secondary_caption = "push on the index"
+
     return Widget(
         construct=bar.construct,
         title=title,
         value=f"{bar.probability:.2f}",
         value_caption="detection strength, 0 to 1",
-        secondary="counted as zero" if bar.inert else f"{bar.contribution:+.3f}",
-        secondary_caption=DIRECTION_PLAIN[direction] if bar.inert else "push on the index",
+        secondary=secondary,
+        secondary_caption=secondary_caption,
         inert=bar.inert,
         detected=bar.detected,
         stamp=stamp,
+        two_sided=two_sided,
+        policy_key=policy_key,
     )
 
 
@@ -83,7 +141,7 @@ def widgets_for(view: DashboardView) -> tuple[Widget, ...]:
     reading tasks.
     """
     bars = sorted(view.bars, key=lambda b: (b.inert, -b.probability, b.construct))
-    return tuple(_widget(bar, view.risk.stamp) for bar in bars)
+    return tuple(_widget(bar, view.risk.stamp, view.policy_key) for bar in bars)
 
 
 def widget_for(view: DashboardView, construct: str) -> Widget:
@@ -163,7 +221,7 @@ def neurofeedback_widget(session, ratios, *, stamp: str) -> Widget:
         construct="neurofeedback",
         title=NF_TILE_LABEL,
         value=f"{state.in_target_s:.0f}s",
-        value_caption=NF_TILE_CAPTION + " — generated signal, no person",
+        value_caption=NF_TILE_CAPTION + ", generated signal, no person",
         secondary=f"{state.longest_hold_s:.0f}s longest hold",
         secondary_caption=f"over {state.elapsed_s:.0f}s of generated signal",
         inert=False,

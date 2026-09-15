@@ -139,7 +139,7 @@ def alpha_theta_ratio(alpha_power: float, theta_power: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# V3 — cognitive load from heart-rate variability and webcam oculometrics
+# V3: cognitive load from heart-rate variability and webcam oculometrics
 # ---------------------------------------------------------------------------
 
 #: The high-frequency HRV band, in Hz. Respiratory-linked, conventionally read as

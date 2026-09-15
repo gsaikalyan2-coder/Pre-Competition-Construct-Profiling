@@ -1,4 +1,4 @@
-"""Page 4 — cognitive load from a simulated body. A renderer, and nothing else.
+"""Page 4, cognitive load from a simulated body. A renderer, and nothing else.
 
 Same contract as `dashboard/app.py` and the other pages: every number, label and
 guard comes from `src.dashboard`, which is pure Python with no ML stack, and
@@ -58,7 +58,7 @@ from src.dashboard import theme  # noqa: E402
 #
 # The layer is ON unless explicitly disabled. See theme.cognitive_layer_enabled.
 if not theme.cognitive_layer_enabled():
-    st.title("Cognitive layer — off")
+    st.title("Cognitive layer: off")
     st.info(
         f"This page is part of the Phase 26 cognitive layer, which is switched off "
         f"because {theme.COGNITIVE_FLAG} is set to a disabling value. Unset it to show "
@@ -204,7 +204,7 @@ components.html(
     scrolling=False,
 )
 
-with st.expander("Provenance and limitations — read before quoting anything here"):
+with st.expander("Provenance and limitations: read before quoting anything here"):
     st.markdown(f"- {plain.LOAD_WHAT_IT_IS_NOT}")
     st.markdown(f"- {plain.LOAD_WEIGHTS_NOTE}")
     st.markdown(f"**{window.stamp}**")

@@ -1,4 +1,4 @@
-"""Page 5 — closed-loop neurofeedback, DEMO MODE. A renderer, and nothing else.
+"""Page 5, closed-loop neurofeedback, DEMO MODE. A renderer, and nothing else.
 
 Same contract as `dashboard/app.py` and the other pages: every number, label and
 guard comes from `src.dashboard`, which is pure Python with no ML stack, and
@@ -19,7 +19,7 @@ the guard is decoration.
 **This is the one feature here that is an intervention, not an observation.**
 A closed feedback loop changes the behaviour of the person inside it. In this
 phase the loop closes against a generated signal and trains nobody, and the page
-refuses to render for anything that is not a `SimulatedSource` — the guard is
+refuses to render for anything that is not a `SimulatedSource`, the guard is
 `require_simulated()`, called before the source is used for anything.
 
 # BLOCKED UNTIL ETHICS SIGN-OFF
@@ -28,7 +28,7 @@ the loop, and `docs/ethics.md` and `docs/model_card.md` updated first. Do not
 weaken, comment out or "temporarily" bypass the guard below.
 
 The demo-mode banner is rendered before the first control, both on this shell
-and inside the panel — the same ordering rule as the provenance stamp, for the
+and inside the panel, the same ordering rule as the provenance stamp, for the
 same reason: a warning below the fold is in the DOM and not on the screen.
 
 Run:  SRN_COGNITIVE_LAYER=1 streamlit run dashboard/app.py
@@ -62,7 +62,7 @@ from src.dashboard import theme  # noqa: E402
 #
 # The layer is ON unless explicitly disabled. See theme.cognitive_layer_enabled.
 if not theme.cognitive_layer_enabled():
-    st.title("Cognitive layer — off")
+    st.title("Cognitive layer: off")
     st.info(
         f"This page is part of the Phase 26 cognitive layer, which is switched off "
         f"because {theme.COGNITIVE_FLAG} is set to a disabling value. Unset it to show "
@@ -146,6 +146,6 @@ components.html(
     scrolling=False,
 )
 
-with st.expander("Provenance and limitations — read before quoting anything here"):
+with st.expander("Provenance and limitations: read before quoting anything here"):
     st.markdown(f"- {plain.NF_ETHICS_GATE}")
     st.markdown(f"**{source.stamp}**")

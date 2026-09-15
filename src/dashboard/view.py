@@ -38,6 +38,7 @@ user's pasted text lives in a local variable for the duration of one render.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -94,6 +95,19 @@ SIX_OF_TEN_WORDING = (
     "resolved."
 )
 
+CONTEXT_INERT_NOTICE = (
+    "A non-verbal reading was taken from the uploaded file and is shown below, but it "
+    "carries a weight of exactly zero: the score above was produced from words alone "
+    "and is bit-identical to the score the same words would get with no file attached."
+)
+
+CONTEXT_ACTIVE_NOTICE = (
+    "The non-verbal channel is switched ON, so values derived from the uploaded file "
+    "moved the score. Those values are not a measurement of anyone and the weighting "
+    "behind them was declared rather than fitted. No number produced this way appears "
+    "in the paper, which is text-only throughout."
+)
+
 RANKING_NOTICE = "Risk index is a ranking only -- not calibrated. No observed outcome exists to calibrate against, and src/risk/calibration.py refuses to run."
 
 LIVE_TEXT_NOTICE = (
@@ -109,12 +123,12 @@ LIVE_TEXT_NOTICE = (
 #: the same fact. A selectbox holding its own strings would be a fourth place
 #: for the two to drift apart.
 POLICY_LABELS: dict[str, PolarityPolicy] = {
-    "Conservative — the default, and what the paper reports": PolarityPolicy.NEUTRAL,
-    "Pessimistic — read every unresolved signal as bad news": PolarityPolicy.PESSIMISTIC,
-    "Optimistic — read every unresolved signal as good news": PolarityPolicy.OPTIMISTIC,
+    "Conservative: the default, and what the paper reports": PolarityPolicy.NEUTRAL,
+    "Pessimistic: read every unresolved signal as bad news": PolarityPolicy.PESSIMISTIC,
+    "Optimistic: read every unresolved signal as good news": PolarityPolicy.OPTIMISTIC,
 }
 
-DEFAULT_POLICY_LABEL = "Conservative — the default, and what the paper reports"
+DEFAULT_POLICY_LABEL = "Conservative: the default, and what the paper reports"
 
 #: Attached to every view, so the policy in force is part of the screened
 #: surface rather than a widget state nobody can test.
@@ -138,12 +152,43 @@ POLICY_NOTES: dict[PolarityPolicy, str] = {
 }
 
 
-def scorer_for(label: str) -> LinearRiskScorer:
+#: What the policy does to the four two-sided constructs, in tile-sized words.
+#:
+#: Keyed by `PolarityPolicy.value` rather than by the enum, so the Streamlit
+#: shell and `widgets.py` can read it without importing `src.risk` -- the same
+#: reason `POLICY_LABELS` lives here rather than in the page.
+POLICY_TILE_NOTE: dict[str, str] = {
+    "neutral": "two-sided, counted as zero under the conservative default",
+    "pessimistic": "two-sided, read as the unfavourable side under this setting",
+    "optimistic": "two-sided, read as the favourable side under this setting",
+}
+
+#: The short name of the assumption in force, for a tile that has room for three
+#: words and not for thirty.
+POLICY_SHORT: dict[str, str] = {
+    "neutral": "conservative",
+    "pessimistic": "pessimistic",
+    "optimistic": "optimistic",
+}
+
+
+def scorer_for(
+    label: str,
+    *,
+    context_weights: Mapping[str, float] | None = None,
+) -> LinearRiskScorer:
     """The scorer a reader's policy choice selects.
 
     The only way `dashboard/app.py` can vary the fusion policy. It cannot build a
     `LinearRiskScorer` itself -- the shell may not import `src.risk` at all -- so
     an unlabelled or invented policy cannot reach the arithmetic.
+
+    `context_weights` is the seam for the Phase 27 non-verbal channel and
+    defaults to nothing at all. Empty weights is the text-only path in
+    `fusion.score`, which is separately tested to produce a bit-identical index
+    whether or not a context mapping is passed alongside it. So a page may
+    always pass context; only a page that also passes weights can move a number
+    with it, and that call site is visible in the diff.
     """
     try:
         policy = POLICY_LABELS[label]
@@ -151,7 +196,7 @@ def scorer_for(label: str) -> LinearRiskScorer:
         raise ValueError(
             f"{label!r} is not one of the offered polarity policies: {sorted(POLICY_LABELS)}"
         ) from None
-    return LinearRiskScorer(polarity_policy=policy)
+    return LinearRiskScorer(polarity_policy=policy, context_weights=dict(context_weights or {}))
 
 
 INERT_NOTE = "detected but does not move the index (direction unresolved under the conservative default policy)"
@@ -278,6 +323,10 @@ class DashboardView:
     caveat: str
     notices: tuple[str, ...] = ()
     policy_note: str = POLICY_NOTES[PolarityPolicy.NEUTRAL]
+    #: `PolarityPolicy.value` for the policy that produced these numbers. A
+    #: plain string, so the render layer can branch on it without importing
+    #: `src.risk`, and part of the screened surface rather than a widget state.
+    policy_key: str = PolarityPolicy.NEUTRAL.value
     is_default_policy: bool = True
     publication_checked: bool = field(default=False, init=False)
     exportable: bool = field(default=False, init=False)
@@ -366,6 +415,20 @@ class DashboardView:
         return self.card.risk.raw_score
 
     @property
+    def two_sided_detected(self) -> int:
+        """How many of the two-sided constructs this text actually triggered.
+
+        The number that decides whether the policy selector does anything
+        visible. It is entirely possible for a text to trigger none of them, and
+        the first committed known example does exactly that: moving the selector
+        changes the stated assumption and leaves every number identical, which
+        reads as a broken control rather than as an honest one. Surfaced so the
+        page can say which case the reader is in instead of leaving them to
+        guess.
+        """
+        return sum(1 for bar in self.bars if bar.direction == "polar" and bar.detected)
+
+    @property
     def evidenced_driver_count(self) -> int:
         """Drivers that do point at a span. The complement of the count below."""
         return len(self.card.drivers) - len(self.card.unevidenced_drivers)
@@ -432,8 +495,9 @@ def _view_from_result(
     *,
     scorer: LinearRiskScorer,
     top_spans: int,
+    context: Mapping[str, float] | None = None,
 ) -> DashboardView:
-    risk = scorer.score(result.probabilities)
+    risk = scorer.score(result.probabilities, context=dict(context) if context else None)
     card = build_card(
         explanation=result.explanation,
         risk=risk,
@@ -481,6 +545,15 @@ def _view_from_result(
         # Loudest where it matters: a reader who changed the policy and then
         # screenshots the page must carry the reason the number moved.
         notices.append(POLICY_NOTES[policy])
+    if context:
+        # Said whether or not the weights are non-empty, because "context was
+        # supplied" and "context changed the number" are different facts and the
+        # reader is entitled to both. `scorer.context_weights` is the one that
+        # decides, so it is the one quoted.
+        if scorer.context_weights:
+            notices.append(CONTEXT_ACTIVE_NOTICE)
+        else:
+            notices.append(CONTEXT_INERT_NOTICE)
     notices.append(
         "Research and decision-support only. This is not a clinical instrument and "
         "makes no individual-level claim about any identifiable person."
@@ -496,6 +569,7 @@ def _view_from_result(
         caveat=result.caveat,
         notices=tuple(notices),
         policy_note=POLICY_NOTES[scorer.polarity_policy],
+        policy_key=scorer.polarity_policy.value,
         is_default_policy=scorer.polarity_policy is PolarityPolicy.NEUTRAL,
     )
 
@@ -507,6 +581,7 @@ def build_view(
     backend: PredictionBackend | None = None,
     scorer: LinearRiskScorer | None = None,
     top_spans: int = 3,
+    context: Mapping[str, float] | None = None,
 ) -> DashboardView:
     """The dashboard's single entry point.
 
@@ -531,7 +606,7 @@ def build_view(
             raise ValueError("Nothing to score.")
         result = backend.predict(text)
 
-    return _view_from_result(result, scorer=scorer, top_spans=top_spans)
+    return _view_from_result(result, scorer=scorer, top_spans=top_spans, context=context)
 
 
 def known_examples(fixture_path: Path | None = None) -> ReplayBackend:

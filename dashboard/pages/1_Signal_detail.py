@@ -164,7 +164,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-with st.expander("Provenance and limitations — read before quoting any number"):
+with st.expander("Provenance and limitations: read before quoting any number"):
     for notice in view.notices:
         st.markdown(f"- {notice}")
     st.markdown(f"- {view.card.provenance}")

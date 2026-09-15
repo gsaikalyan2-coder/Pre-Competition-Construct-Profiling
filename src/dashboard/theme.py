@@ -285,7 +285,7 @@ def app_css(mode: str = DEFAULT_MODE) -> str:
       .micro{{font-size:12px; line-height:1.4; color:var(--muted)}}
 
       /* Announcement bar: full-width black strip, 36px, centred microcopy. */
-      .announcement{{background:{p["ink"] if mode == "dark" else COHERE_BLACK}; color:{p["canvas"] if mode == "dark" else ON_DARK}; height:36px;
+      .announcement{{background:{p["surface-alt"] if mode == "dark" else COHERE_BLACK}; color:{p["ink"] if mode == "dark" else ON_DARK}; border-bottom:1px solid {p["hairline"] if mode == "dark" else COHERE_BLACK}; height:36px;
         display:flex; align-items:center; justify-content:center; font-size:12px;
         line-height:1.4; margin:-{SPACE_XXL} -100vw {SPACE_XXL} -100vw;
         padding:0 100vw}}

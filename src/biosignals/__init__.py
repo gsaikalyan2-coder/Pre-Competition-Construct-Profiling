@@ -1,4 +1,4 @@
-"""Phase 26 — simulated biosignal sources and the pure features over them.
+"""Phase 26: simulated biosignal sources and the pure features over them.
 
 Nothing in this package measures anybody
 ----------------------------------------
