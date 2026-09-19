@@ -25,3 +25,25 @@ numpy==2.4.4
 pandas==3.0.2
 scipy==1.17.1
 scikit-learn==1.8.0
+
+# Facial cues (Phase 28). hsemotion-onnx runs on onnxruntime, no torch, to stay
+# inside the Space's memory ceiling. opencv-python-headless avoids the libGL
+# import failure the full opencv-python wheel hits on this image; the pin on
+# opencv-python is required alongside it because hsemotion-onnx depends on the
+# unpinned non-headless package, and an unconstrained 5.x resolve would win and
+# remove the Haar cascade API both packages need. See requirements-base.txt in
+# the research repo for the full rationale.
+hsemotion-onnx==0.3.1
+onnxruntime==1.28.0
+opencv-python-headless==4.14.0.94
+opencv-python==4.14.0.94
+
+# Press-conference captions (Phase 29). Reads a video's published caption
+# track only -- no download, no audio, no pixels. The feature this enables is
+# blocked by default (SRN_MATCHDAY_REAL_ATHLETES unset; see docs/ethics.md
+# sec.15 in the research repo), so installing this library ships no live
+# capability by itself. yt-dlp and faster-whisper, the optional speech route,
+# are deliberately NOT listed here: multi-hundred-megabyte runtime, weights
+# downloaded on first use, and yt-dlp is frequently blocked from cloud IP
+# ranges. The deployed app reads captions only.
+youtube-transcript-api==1.2.4
